@@ -1,7 +1,7 @@
 # Password Strength Checker - W02 Project
 # This program helps employees check the strength of their passwords
 # Created by: Yesid Romero
-#CSE - 111 Programming with functions
+# CSE - 111 Programming with functions
 # Character type constants defined by the architect Sven
 # These lists define the 4 types of characters used for complexity calculation
 
@@ -22,7 +22,20 @@ def word_in_file(word, filename, case_sensitive=False):
     Returns:
     - Boolean: True if word is found, False otherwise
     """
-    pass
+    try:
+        with open(filename, "r", encoding="utf-8") as file:
+            for line in file:
+                line_word = line.strip()
+                if case_sensitive:
+                    if line_word == word:
+                        return True
+                else:
+                    if line_word.lower() == word.lower():
+                        return True
+    except FileNotFoundError:
+        # Silent mode - no warning messages for missing files
+        pass
+    return False
 
 def word_has_character(word, character_list):
     """
@@ -35,7 +48,10 @@ def word_has_character(word, character_list):
     Returns:
     - Boolean: True if any character from word is in character_list, False otherwise
     """
-    pass
+    for char in word:
+        if char in character_list:
+            return True
+    return False
 
 def word_complexity(word):
     """
@@ -48,7 +64,70 @@ def word_complexity(word):
     Returns:
     - Integer: Complexity score from 0 to 4 (one point per character type found)
     """
-    pass
+    complexity = 0
+    if word_has_character(word, LOWER):
+        complexity += 1
+    if word_has_character(word, UPPER):
+        complexity += 1
+    if word_has_character(word, DIGITS):
+        complexity += 1
+    if word_has_character(word, SPECIAL):
+        complexity += 1
+    return complexity
+
+# CREATIVE ENHANCEMENT 1: Pattern Detection
+def has_common_patterns(password):
+    """
+    Checks for common unsafe patterns in passwords.
+    This is a creative enhancement to improve password security analysis.
+    
+    Parameters:
+    - password: The password to analyze
+    
+    Returns:
+    - Boolean: True if common patterns are found, False otherwise
+    """
+    password_lower = password.lower()
+    common_patterns = [
+        "123", "abc", "qwerty", "password", "admin", "user",
+        "000", "111", "aaa", "login", "welcome", "master"
+    ]
+    
+    for pattern in common_patterns:
+        if pattern in password_lower:
+            return True
+    return False
+
+# CREATIVE ENHANCEMENT 2: Password Improvement Suggestions
+def suggest_improvements(password):
+    """
+    Provides specific suggestions to improve password strength.
+    This is a creative enhancement to help users create better passwords.
+    
+    Parameters:
+    - password: The password to analyze
+    
+    Returns:
+    - List: List of improvement suggestions
+    """
+    suggestions = []
+    
+    if not word_has_character(password, UPPER):
+        suggestions.append("Add uppercase letters (A-Z)")
+    if not word_has_character(password, LOWER):
+        suggestions.append("Add lowercase letters (a-z)")
+    if not word_has_character(password, DIGITS):
+        suggestions.append("Add numbers (0-9)")
+    if not word_has_character(password, SPECIAL):
+        suggestions.append("Add special characters (!@#$%^&*)")
+    
+    if len(password) < 10:
+        suggestions.append(f"Make it longer (current: {len(password)}, recommended: 10+)")
+    
+    if has_common_patterns(password):
+        suggestions.append("Avoid common patterns like '123', 'abc', or 'password'")
+    
+    return suggestions
 
 def password_strength(password, min_length=10, strong_length=16):
     """
@@ -63,33 +142,68 @@ def password_strength(password, min_length=10, strong_length=16):
     Returns:
     - Integer: Strength score from 0 to 5
     """
-    pass
+    # Check if password is in dictionary (case insensitive)
+    if word_in_file(password, "wordlist.txt"):
+        print("Password is a dictionary word and is not secure.")
+        return 0
+    
+    # Check if password is in top passwords list (case sensitive)
+    if word_in_file(password, "toppasswords.txt", case_sensitive=True):
+        print("Password is a commonly used password and is not secure.")
+        return 0
+    
+    # CREATIVE ENHANCEMENT: Check for common patterns
+    if has_common_patterns(password):
+        print("Password contains common patterns and may not be secure.")
+        # Don't return 0 here, just warn but continue evaluation
+    
+    # Check password length
+    if len(password) < min_length:
+        print("Password is too short and is not secure.")
+        return 1
+    
+    # Check if password is long enough to be strong
+    if len(password) >= strong_length:
+        print("Password is long, length trumps complexity this is a good password.")
+        return 5
+    
+    # Calculate complexity and determine strength
+    complexity = word_complexity(password)
+    strength = 1 + complexity
+    return strength
 
 def main():
     """
     Main program loop that handles user interaction.
     Continuously asks for passwords to test until user enters 'q' or 'Q' to quit.
+    Enhanced with creative features: pattern detection and improvement suggestions.
     """
-    print("Password Strength Checker")
+    print("Password Strength Checker - Enhanced Version")
     print("Enter 'q' or 'Q' to quit the program")
-    print("-" * 40)
+    print("-" * 50)
     
     while True:
         # Get password input from user
         password = input("Enter a password to test: ")
         
         # Check if user wants to quit
-        if password == "q" or password == "Q":
+        if password.lower() == "q":
             print("Thank you for using the Password Strength Checker!")
             break
         
-        # For milestone: just display the password entered
-        # Later this will be replaced with actual password_strength function call
-        print(f"You entered the password: {password}")
-        print("(Password strength analysis will be implemented in the next phase)")
-        print("-" * 40)
+        # Check password strength
+        strength = password_strength(password)
+        print(f"Password strength: {strength}/5")
+        
+        # CREATIVE ENHANCEMENT: Show improvement suggestions if password is weak
+        if strength < 4:
+            suggestions = suggest_improvements(password)
+            if suggestions:
+                print("\nSuggestions for improvement:")
+                for i, suggestion in enumerate(suggestions, 1):
+                    print(f"  {i}. {suggestion}")
+        
+        print("-" * 50)
 
-# This code ensures that main() only runs when the script is executed directly
-# (not when imported as a module). This helps the testing team.
 if __name__ == "__main__":
     main()
