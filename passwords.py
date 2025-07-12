@@ -33,8 +33,7 @@ def word_in_file(word, filename, case_sensitive=False):
                     if line_word.lower() == word.lower():
                         return True
     except FileNotFoundError:
-        # Silent mode - no warning messages for missing files
-        pass
+        print(f"Warning: File {filename} not found.")
     return False
 
 def word_has_character(word, character_list):
